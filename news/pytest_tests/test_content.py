@@ -1,6 +1,6 @@
+import pytest
 from django.conf import settings
 from django.urls import reverse
-import pytest
 
 
 pytestmark = pytest.mark.django_db
@@ -8,6 +8,10 @@ pytestmark = pytest.mark.django_db
 
 @pytest.mark.usefixtures('list_of_news')
 def test_news_count_on_home_page(client):
+    """
+    Проверяет, что количество выводимых на
+    главную страницу новостей не превышает 10.
+    """
     home_url = reverse('news:home')
     response = client.get(home_url)
     object_list = response.context['object_list']
@@ -17,6 +21,7 @@ def test_news_count_on_home_page(client):
 
 @pytest.mark.usefixtures('list_of_news')
 def test_news_order(client):
+    """Проверяет сортировку новостей на главной странице."""
     home_url = reverse('news:home')
     response = client.get(home_url)
     object_list = response.context['object_list']
@@ -27,6 +32,7 @@ def test_news_order(client):
 
 @pytest.mark.usefixtures('list_of_comments')
 def test_comments_order(client, news, pk_for_args):
+    """Проверяет сортировку комментариев на странице новости."""
     url = reverse('news:detail', args=(pk_for_args))
     response = client.get(url)
     assert 'news' in response.context
@@ -44,8 +50,9 @@ def test_comments_order(client, news, pk_for_args):
     )
 )
 def test_comment_form_availability_for_different_users(
-    user_client, form_status, pk_for_args
+    form_status, pk_for_args, user_client
 ):
+    """Тестирует доступность формы создания комментария для пользователей."""
     url = reverse('news:detail', args=(pk_for_args))
     response = user_client.get(url)
     assert ('form' in response.context) is form_status

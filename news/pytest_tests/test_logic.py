@@ -12,6 +12,7 @@ from news.models import Comment
 def test_anonymous_user_cant_create_comment(
     client, comment_form_data, pk_for_args
 ):
+    """Проверяет, что анонимный пользователь не может создать комментарий."""
     url = reverse('news:detail', args=pk_for_args)
     client.post(url, data=comment_form_data)
     comment_count = Comment.objects.count()
@@ -21,6 +22,10 @@ def test_anonymous_user_cant_create_comment(
 def test_auth_user_can_create_comment(
         author_client, comment_author, comment_form_data, news, pk_for_args
 ):
+    """
+    Проверяет, что аутентифицированный пользователь
+    может создать комментарий.
+    """
     url = reverse('news:detail', args=pk_for_args)
     response = author_client.post(url, data=comment_form_data)
     assertRedirects(response, f'{url}#comments')
@@ -33,6 +38,10 @@ def test_auth_user_can_create_comment(
 
 
 def test_user_cant_use_bad_words(author_client, bad_words_data, pk_for_args):
+    """
+    Проверяет, что пользователь не может использовать
+    запрещенные слова при создании комментария.
+    """
     url = reverse('news:detail', args=pk_for_args)
     response = author_client.post(url, data=bad_words_data)
     assertFormError(response, 'form', 'text', errors=WARNING)
@@ -50,6 +59,10 @@ def test_user_cant_use_bad_words(author_client, bad_words_data, pk_for_args):
 def test_delete_comment_availability(
     authorship, comment, expected_comment_count, pk_for_args, user_client
 ):
+    """
+    Проверяет возможность удалить комментарий
+    для автора комментария и другого пользователя.
+    """
     url = reverse('news:delete', args=(comment.id,))
     response = user_client.delete(url)
     if authorship:
@@ -84,6 +97,10 @@ def test_edit_comment_availability(
     pk_for_args,
     user_client
 ):
+    """
+    Проверяет возможность редактировать комментарий
+    для автора комментария и другого пользователя.
+    """
     url = reverse('news:edit', args=(comment.id,))
     response = user_client.post(url, data=comment_form_data)
     if authorship:
