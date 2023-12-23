@@ -10,25 +10,23 @@ from news.models import Comment
 
 @pytest.mark.django_db
 def test_anonymous_user_cant_create_comment(
-    client, comment_form_data, pk_for_args
+    client, comment_form_data, url_news_page
 ):
     """Проверяет, что анонимный пользователь не может создать комментарий."""
-    url = reverse('news:detail', args=pk_for_args)
-    client.post(url, data=comment_form_data)
+    client.post(url_news_page, data=comment_form_data)
     comment_count = Comment.objects.count()
     assert comment_count == 0
 
 
 def test_auth_user_can_create_comment(
-        author_client, comment_author, comment_form_data, news, pk_for_args
+        author_client, comment_author, comment_form_data, news, url_news_page
 ):
     """
     Проверяет, что аутентифицированный пользователь
     может создать комментарий.
     """
-    url = reverse('news:detail', args=pk_for_args)
-    response = author_client.post(url, data=comment_form_data)
-    assertRedirects(response, f'{url}#comments')
+    response = author_client.post(url_news_page, data=comment_form_data)
+    assertRedirects(response, f'{url_news_page}#comments')
     comments_count = Comment.objects.count()
     assert comments_count == 1
     comment = Comment.objects.get()
@@ -37,13 +35,12 @@ def test_auth_user_can_create_comment(
     assert comment.author == comment_author
 
 
-def test_user_cant_use_bad_words(author_client, bad_words_data, pk_for_args):
+def test_user_cant_use_bad_words(author_client, bad_words_data, url_news_page):
     """
     Проверяет, что пользователь не может использовать
     запрещенные слова при создании комментария.
     """
-    url = reverse('news:detail', args=pk_for_args)
-    response = author_client.post(url, data=bad_words_data)
+    response = author_client.post(url_news_page, data=bad_words_data)
     assertFormError(response, 'form', 'text', errors=WARNING)
     comment_count = Comment.objects.count()
     assert comment_count == 0
@@ -57,7 +54,7 @@ def test_user_cant_use_bad_words(author_client, bad_words_data, pk_for_args):
     )
 )
 def test_delete_comment_availability(
-    authorship, comment, expected_comment_count, pk_for_args, user_client
+    authorship, comment, expected_comment_count, url_news_page, user_client
 ):
     """
     Проверяет возможность удалить комментарий
@@ -66,8 +63,7 @@ def test_delete_comment_availability(
     url = reverse('news:delete', args=(comment.id,))
     response = user_client.delete(url)
     if authorship:
-        url_to_comments = reverse('news:detail', args=pk_for_args)
-        assertRedirects(response, f'{url_to_comments}#comments')
+        assertRedirects(response, f'{url_news_page}#comments')
     else:
         assert response.status_code == HTTPStatus.NOT_FOUND
     comment_count = Comment.objects.count()
@@ -75,7 +71,7 @@ def test_delete_comment_availability(
 
 
 @pytest.mark.parametrize(
-    'user_client, authorship, expected_text',
+    'user_client, authorship, expected_comment',
     (
         (
             pytest.lazy_fixture('author_client'),
@@ -93,8 +89,8 @@ def test_edit_comment_availability(
     authorship,
     comment,
     comment_form_data,
-    expected_text,
-    pk_for_args,
+    expected_comment,
+    url_news_page,
     user_client
 ):
     """
@@ -104,9 +100,8 @@ def test_edit_comment_availability(
     url = reverse('news:edit', args=(comment.id,))
     response = user_client.post(url, data=comment_form_data)
     if authorship:
-        url_to_comments = reverse('news:detail', args=pk_for_args)
-        assertRedirects(response, f'{url_to_comments}#comments')
+        assertRedirects(response, f'{url_news_page}#comments')
     else:
         assert response.status_code == HTTPStatus.NOT_FOUND
     new_comment = Comment.objects.get()
-    assert new_comment.text == expected_text.text
+    assert new_comment.text == expected_comment.text
