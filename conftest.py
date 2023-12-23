@@ -3,8 +3,8 @@ from datetime import datetime, timedelta
 import pytest
 from django.conf import settings
 from django.test import Client
+from django.urls import reverse
 from django.utils import timezone
-
 
 from news.forms import BAD_WORDS
 from news.models import Comment, News
@@ -98,3 +98,13 @@ def bad_words_data():
     return {
         'text': f'Текст, {BAD_WORDS[0]}, еще текст',
     }
+
+
+@pytest.fixture
+def url_home_page():
+    return reverse('news:home')
+
+
+@pytest.fixture
+def url_news_page(pk_for_args):
+    return reverse('news:detail', args=(pk_for_args))
